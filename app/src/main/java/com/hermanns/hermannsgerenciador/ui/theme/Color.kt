@@ -5,6 +5,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.filled.Home
 
+// Expiry indicator colors
+val ExpiryRed = Color(0xFFB00020)
+val ExpiryOrange = Color(0xFFFFA000)
+val ExpiryYellow = Color(0xFFFFD300)
+val ExpiryLime = Color(0xFFBBDB44)
+val ExpiryGreen = Color(0xFF2E7D32)
+val ExpiryTextRed = Color(0xFFFF6B6A)
+
 val LightColorScheme = lightColorScheme(
     primary = Color(0xFF00695C),
     secondary = Color(0xFF26A69A),

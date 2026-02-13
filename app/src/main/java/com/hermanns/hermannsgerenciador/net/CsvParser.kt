@@ -7,6 +7,12 @@ import java.time.format.DateTimeParseException
 
 object CsvParser {
 
+    private val DATE_FORMATTERS = listOf(
+        "dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "d-M-yyyy",
+        "MM/dd/yyyy", "M/d/yyyy", "yyyy-MM-dd", "yyyy/MM/dd", "dd.MM.yyyy",
+        "MM/yyyy", "M/yyyy"
+    ).map { DateTimeFormatter.ofPattern(it) }
+
     fun parse(csvText: String): List<List<String>> {
         return csvText.lines()
             .filter { it.isNotBlank() }
@@ -47,15 +53,9 @@ object CsvParser {
         if (text.isBlank()) return null
         val trimmed = text.trim()
 
-        val formats = listOf(
-            "dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "d-M-yyyy",
-            "MM/dd/yyyy", "M/d/yyyy", "yyyy-MM-dd", "yyyy/MM/dd", "dd.MM.yyyy",
-            "MM/yyyy", "M/yyyy"  // Added for month/year only
-        )
-
-        for (pattern in formats) {
+        for (formatter in DATE_FORMATTERS) {
             try {
-                return LocalDate.parse(trimmed, DateTimeFormatter.ofPattern(pattern))
+                return LocalDate.parse(trimmed, formatter)
             } catch (_: DateTimeParseException) { }
         }
 

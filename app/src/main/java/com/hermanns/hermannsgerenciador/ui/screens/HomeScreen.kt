@@ -1,15 +1,20 @@
 package com.hermanns.hermannsgerenciador.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.hermanns.hermannsgerenciador.salesman.ui.SalesmanLoginActivity
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(navController: NavHostController, onShowPromo: () -> Unit) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -23,7 +28,6 @@ fun HomeScreen(navController: NavHostController) {
         )
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Expiry Tracker Option
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -36,12 +40,11 @@ fun HomeScreen(navController: NavHostController) {
             }
         }
 
-        // Placeholder for Estoque
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            onClick = { navController.navigate("promoções") }
+            onClick = onShowPromo
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Promoções", style = MaterialTheme.typography.titleMedium)
@@ -49,16 +52,17 @@ fun HomeScreen(navController: NavHostController) {
             }
         }
 
-        // Placeholder for Relatórios
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            onClick = { navController.navigate("relatorios") }
+            onClick = {
+                context.startActivity(Intent(context, SalesmanLoginActivity::class.java))
+            }
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Relatórios", style = MaterialTheme.typography.titleMedium)
-                Text("Gere relatórios de vendas e estoque", style = MaterialTheme.typography.bodyMedium)
+                Text("Relatórios de visitas e gastos", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

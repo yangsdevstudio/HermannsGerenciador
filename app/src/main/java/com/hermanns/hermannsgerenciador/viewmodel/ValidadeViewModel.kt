@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hermanns.hermannsgerenciador.data.Medication
 import com.hermanns.hermannsgerenciador.repo.SheetsApiRepository
+import com.hermanns.hermannsgerenciador.util.NotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,8 @@ class ValidadeViewModel(
                 val meds = result.getOrNull() ?: emptyList()
                 _medications.value = meds
                 _labs.value = listOf("Todos") + meds.map { it.lab }.distinct().sorted()
+                // New: Trigger notifications for new/near-expiry entries
+                NotificationHelper.checkAndNotifyNewEntry(context.applicationContext, meds)
             } else {
                 val msg = result.exceptionOrNull()?.message ?: "Erro ao atualizar"
                 _error.value = msg
@@ -54,9 +57,13 @@ class ValidadeViewModel(
 
     private fun loadFromCache() {
         viewModelScope.launch {
-            val cached = repository.loadFromCache()
-            _medications.value = cached
-            _labs.value = listOf("Todos") + cached.map { it.lab }.distinct().sorted()
+            try {
+                val cached = repository.loadFromCache()
+                _medications.value = cached
+                _labs.value = listOf("Todos") + cached.map { it.lab }.distinct().sorted()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Erro ao carregar cache"
+            }
         }
     }
 }

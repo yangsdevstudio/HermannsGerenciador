@@ -32,7 +32,7 @@ object NotificationHelper {
                 description = "Notificações sobre vencimento de medicamentos"
             }
             context.getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
+                ?.createNotificationChannel(channel) // Safe-call to avoid NPE
         }
     }
 
@@ -47,12 +47,15 @@ object NotificationHelper {
         val prefs = context.getSharedPreferences("notified_meds", Context.MODE_PRIVATE)
         val newlyEntered = nearExpiry.filter { med ->
             val key = "${med.code}_${med.lab}"
-            !prefs.getBoolean(key, false).also { wasNotified ->
-                if (!wasNotified) prefs.edit().putBoolean(key, true).apply()
-            }
+            !prefs.getBoolean(key, false)
         }
 
         if (newlyEntered.isNotEmpty()) {
+            val editor = prefs.edit()
+            newlyEntered.forEach { med ->
+                editor.putBoolean("${med.code}_${med.lab}", true)
+            }
+            editor.apply()
             sendSingleEntryNotification(context, newlyEntered.first())
         }
     }
@@ -78,7 +81,7 @@ object NotificationHelper {
             .setAutoCancel(true)
 
         context.getSystemService(NotificationManager::class.java)
-            .notify(SINGLE_ENTRY_NOTIFICATION_ID, builder.build())
+            ?.notify(SINGLE_ENTRY_NOTIFICATION_ID, builder.build())
     }
 
     fun scheduleDailyNotification(context: Context) {
@@ -143,6 +146,6 @@ object NotificationHelper {
             .setAutoCancel(true)
 
         context.getSystemService(NotificationManager::class.java)
-            .notify(DAILY_NOTIFICATION_ID, builder.build())
+            ?.notify(DAILY_NOTIFICATION_ID, builder.build())
     }
 }

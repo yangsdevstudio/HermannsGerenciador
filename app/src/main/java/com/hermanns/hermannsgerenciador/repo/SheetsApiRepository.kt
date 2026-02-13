@@ -19,6 +19,14 @@ class SheetsApiRepository(private val context: Context) {
         private const val EXPORT_URL = "https://docs.google.com/spreadsheets/d/%s/export?format=csv&gid=%s"
         private const val METADATA_URL = "https://sheets.googleapis.com/v4/spreadsheets/%s?fields=sheets.properties&key=%s"
         private const val TAG = "SheetsApiRepo"
+
+        private fun csvEscape(field: String): String {
+            return if (field.contains(',') || field.contains('"') || field.contains('\n')) {
+                "\"${field.replace("\"", "\"\"")}\""
+            } else {
+                field
+            }
+        }
     }
 
     private val client = OkHttpClient.Builder()
@@ -136,7 +144,7 @@ class SheetsApiRepository(private val context: Context) {
             val csv = buildString {
                 appendLine("lab,code,name,quantity,expiry")
                 meds.forEach {
-                    appendLine("${it.lab},${it.code},${it.name},${it.quantity},${it.expiryDate}")
+                    appendLine("${csvEscape(it.lab)},${csvEscape(it.code)},${csvEscape(it.name)},${it.quantity},${it.expiryDate}")
                 }
             }
             file.writeText(csv)

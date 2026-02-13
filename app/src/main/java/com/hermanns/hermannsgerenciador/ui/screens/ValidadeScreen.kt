@@ -14,15 +14,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.hermanns.hermannsgerenciador.BuildConfig
 import com.hermanns.hermannsgerenciador.ui.MedicationRow
 import com.hermanns.hermannsgerenciador.viewmodel.ValidadeViewModel
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ValidadeScreen(viewModel: ValidadeViewModel) {
+fun ValidadeScreen(viewModel: ValidadeViewModel, navController: NavController) {
     val context = LocalContext.current
     val meds by viewModel.medications.collectAsState()
     val labs by viewModel.labs.collectAsState()
@@ -31,33 +32,30 @@ fun ValidadeScreen(viewModel: ValidadeViewModel) {
 
     var selectedLab by remember { mutableStateOf("Todos") }
     var searchQuery by remember { mutableStateOf("") }
-    var selectedSort by remember { mutableStateOf("Validade Asc") }
+    var selectedSort by remember { mutableStateOf("Validade Mais Próxima") }
     var sortMenuExpanded by remember { mutableStateOf(false) }
 
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    val listState = rememberLazyListState()  // ← Track scroll state
-    val scope = rememberCoroutineScope()     // ← For scrolling
+    val listState = rememberLazyListState()
 
-    // Filtered + Sorted list
-    val filteredAndSorted = meds
-        .filter { selectedLab == "Todos" || it.lab == selectedLab }
-        .filter { it.name.contains(searchQuery, ignoreCase = true) }
-        .sortedWith(
-            when (selectedSort) {
-                "Nome A → Z" -> compareBy { it.name }
-                "Nome Z → A" -> compareByDescending { it.name }
-                "Código A → Z" -> compareBy { it.code }
-                "Código Z → A" -> compareByDescending { it.code }
-                "Validade Mais Longe" -> compareByDescending { it.expiryDate }
-                else -> compareBy { it.expiryDate } // Validade Mais Próxima
-            }
-        )
+    val filteredAndSorted = remember(meds, selectedLab, searchQuery, selectedSort) {
+        meds
+            .filter { selectedLab == "Todos" || it.lab == selectedLab }
+            .filter { it.name.contains(searchQuery, ignoreCase = true) }
+            .sortedWith(
+                when (selectedSort) {
+                    "Nome A → Z" -> compareBy { it.name }
+                    "Nome Z → A" -> compareByDescending { it.name }
+                    "Código A → Z" -> compareBy { it.code }
+                    "Código Z → A" -> compareByDescending { it.code }
+                    "Validade Mais Longe" -> compareByDescending { it.expiryDate }
+                    else -> compareBy { it.expiryDate }
+                }
+            )
+    }
 
-    // Auto-scroll to top when filter/search/sort changes
     LaunchedEffect(selectedLab, searchQuery, selectedSort) {
-        scope.launch {
-            listState.animateScrollToItem(0)
-        }
+        listState.animateScrollToItem(0)
     }
 
     Scaffold(
@@ -65,7 +63,11 @@ fun ValidadeScreen(viewModel: ValidadeViewModel) {
             TopAppBar(
                 title = { Text("Validade de Medicamentos") },
                 navigationIcon = {
-                    IconButton(onClick = { /* No back in drawer version */ }) {
+                    IconButton(onClick = {
+                        // Volta para a rota "home" se estiver no backstack.
+                        navController.popBackStack("home", inclusive = false)
+                        // Se preferir forçar navegação e limpar backstack, use navigate com popUpTo.
+                    }) {
                         Icon(Icons.Filled.ArrowBack, "Voltar")
                     }
                 },
@@ -102,7 +104,6 @@ fun ValidadeScreen(viewModel: ValidadeViewModel) {
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
 
-            // Search + Lab filter
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -153,7 +154,7 @@ fun ValidadeScreen(viewModel: ValidadeViewModel) {
                     )
 
                     else -> {
-                        LazyColumn(state = listState) {  // ← Use the remembered state
+                        LazyColumn(state = listState) {
                             items(
                                 items = filteredAndSorted,
                                 key = { "${it.code}_${it.lab}_${it.expiryDate}" }

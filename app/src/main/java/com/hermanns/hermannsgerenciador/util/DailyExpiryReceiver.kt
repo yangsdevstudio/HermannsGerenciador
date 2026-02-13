@@ -12,14 +12,19 @@ import java.time.temporal.ChronoUnit
 
 class DailyExpiryReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
+        val pendingResult = goAsync()
         val repository = SheetsApiRepository(context)
         CoroutineScope(Dispatchers.IO).launch {
-            val meds = repository.loadFromCache()
-            val count = meds.count {
-                val days = ChronoUnit.DAYS.between(LocalDate.now(), it.expiryDate)
-                days in 1..90
+            try {
+                val meds = repository.loadFromCache()
+                val count = meds.count {
+                    val days = ChronoUnit.DAYS.between(LocalDate.now(), it.expiryDate)
+                    days in 1..90
+                }
+                NotificationHelper.sendDailySummary(context, count)
+            } finally {
+                pendingResult.finish()
             }
-            NotificationHelper.sendDailySummary(context, count)
         }
     }
 }
